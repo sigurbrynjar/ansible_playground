@@ -1,0 +1,19 @@
+- name: Test Playbook
+  hosts: node_servers
+  become: true
+  tasks:
+    - name: Install curl
+      ansible.builtin.apt:
+        name: curl
+        state: present
+        update_cache: true
+    - name: Install wget
+      ansible.builtin.apt:
+        name: wget
+        state: present
+        update_cache: true
+    - name: Install ping
+      ansible.builtin.apt:
+        name: iputils-ping
+        state: present
+        update_cache: true

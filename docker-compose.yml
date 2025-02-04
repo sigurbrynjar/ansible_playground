@@ -1,0 +1,15 @@
+services:
+  node1:
+    image: ansible-test-image
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: node1
+    command: sleep infinity
+
+  node2:
+    image: ansible-test-image
+    depends_on:
+      - node1
+    container_name: node2
+    command: sleep infinity
