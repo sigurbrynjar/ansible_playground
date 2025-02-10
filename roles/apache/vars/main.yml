@@ -1,0 +1,11 @@
+apache_port: 8080
+apache_user: "www-data"
+apache_group: "www-data"
+apache_timeout: 400
+apache_keepalive: "On"
+apache_max_keepalive_requests: 200
+apache_keepalive_timeout: 10
+apache_server_name: "example.com"
+apache_admin_email: "admin@example.com"
+apache_doc_root: "/var/www/example"
+apache_vhost: true

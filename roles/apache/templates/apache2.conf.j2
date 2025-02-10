@@ -1,0 +1,59 @@
+# Basic Apache2 Configuration Template
+# Generated for Ansible
+
+ServerRoot "/etc/apache2"
+
+# Listen on specified port (default: 80)
+Listen {{ apache_port | default(80) }}
+
+# Define the user and group under which Apache runs
+User {{ apache_user | default('www-data') }}
+Group {{ apache_group | default('www-data') }}
+
+# Log directories
+ErrorLog ${APACHE_LOG_DIR}/error.log
+CustomLog ${APACHE_LOG_DIR}/access.log combined
+
+# Default ServerName (optional)
+{% if apache_server_name is defined %}
+ServerName {{ apache_server_name }}
+{% endif %}
+
+# Load Modules
+IncludeOptional mods-enabled/*.load
+IncludeOptional mods-enabled/*.conf
+
+# Include Virtual Hosts
+IncludeOptional sites-enabled/*.conf
+
+# Timeout
+Timeout {{ apache_timeout | default(300) }}
+
+# KeepAlive settings
+KeepAlive {{ apache_keepalive | default('On') }}
+MaxKeepAliveRequests {{ apache_max_keepalive_requests | default(100) }}
+KeepAliveTimeout {{ apache_keepalive_timeout | default(5) }}
+
+# Security Headers
+<IfModule mod_headers.c>
+    Header always set X-Frame-Options DENY
+    Header always set X-XSS-Protection "1; mode=block"
+    Header always set X-Content-Type-Options nosniff
+</IfModule>
+
+# Basic Virtual Host Configuration (optional)
+{% if apache_vhost is defined %}
+<VirtualHost *:{{ apache_port | default(80) }}>
+    ServerAdmin {{ apache_admin_email | default('webmaster@localhost') }}
+    DocumentRoot {{ apache_doc_root | default('/var/www/html') }}
+
+    <Directory {{ apache_doc_root | default('/var/www/html') }}>
+        Options Indexes FollowSymLinks
+        AllowOverride None
+        Require all granted
+    </Directory>
+
+    ErrorLog ${APACHE_LOG_DIR}/error.log
+    CustomLog ${APACHE_LOG_DIR}/access.log combined
+</VirtualHost>
+{% endif %}

@@ -1,0 +1,11 @@
+
+# Handlers are tasks that only run when notified by other tasks.
+# They are used to trigger service restarts, configuration changes, 
+# and other actions that need to be taken after a task has been run. 
+# Handlers are defined in the handlers/main.yml file in the role 
+# directory.
+
+- name: Restart Apache  # This handler is trigger by the "Write the apache config file" task
+  ansible.builtin.service:
+    name: apache2
+    state: restarted

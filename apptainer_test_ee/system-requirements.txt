@@ -1,0 +1,3 @@
+slurm-client
+netcdf-bin
+hdf5-tools

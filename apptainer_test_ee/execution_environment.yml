@@ -1,0 +1,28 @@
+version: 3
+
+images:
+  base_image:
+    name: quay.io/ansible/creator-ee:latest # This is specifically designed for execution environments
+    # name: quay.io/ansible/ansible-runner:latest # This is RH's official ansible-runner image
+
+dependencies:
+  python:
+  - mpi4py
+  - numpy
+  - requests
+  - ansible-runner
+  ansible_core:
+    package_pip: ansible-core==2.15
+  system:
+  - slurm-client
+  - netcdf-bin
+  - hdf5-tools
+  galaxy:
+    collections:
+    - name: community.general
+    - name: ansible.posix
+    - name: ansible.builtin
+
+additional_build_steps:
+  prepend_galaxy:
+    - RUN python3 -m pip install --upgrade requests urllib3

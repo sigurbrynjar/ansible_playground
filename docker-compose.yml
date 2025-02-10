@@ -13,3 +13,17 @@ services:
       - node1
     container_name: node2
     command: sleep infinity
+  
+  web1:
+    image: ansible-test-image
+    depends_on:
+      - node1
+    container_name: web1
+    command: sleep infinity
+
+  web2:
+    image: ansible-test-image
+    depends_on:
+      - node1
+    container_name: web2
+    command: sleep infinity

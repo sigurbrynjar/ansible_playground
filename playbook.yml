@@ -1,19 +1,213 @@
+---  # Indicates the start of a YAML document
+
+# Run playbook with the following command:
+# ansible-playbook -i inventory.ini playbook.yml
+
+# Run playbook with tags:
+# ansible-playbook -i inventory.ini playbook.yml --tags test
+
 - name: Test Playbook
   hosts: node_servers
-  become: true
+  # Become is a privilege escalation method, it allows you to execute commands as another user
+  become: true  # We can use True, TRUE, yes, YES, but yamllint will complain
+  vars:
+    my_var: "Hello, World!"
+    user: "{{ lookup('env', 'USER') | default('', true) }}"  # Lookups retrieve data from external sources, such as environment variables or files; pipe symbol is used to chain filters
+    url: "https://example.com/users/foo/resources/bar"
+    list:
+      - foo
+      - bar
+      - baz
+    list_of_packages:
+      - curl
+      - wget
+      - iputils-ping
+  tags:  # Tags are used to run specific tasks, this will run all tasks
+    - test
+  module_defaults:  # Module defaults are used to set default values for modules
+    apt:
+      update_cache: true
   tasks:
+
+    # Note: Don't install packages like this seprarately, use a list instead (See "Optimal apt installation" below)
+    - name: Update apt cache
+      ansible.builtin.apt:  # This is a module, use FQDN when calling modules
+        update_cache: true
     - name: Install curl
       ansible.builtin.apt:
         name: curl
         state: present
-        update_cache: true
     - name: Install wget
       ansible.builtin.apt:
         name: wget
         state: present
-        update_cache: true
     - name: Install ping
       ansible.builtin.apt:
         name: iputils-ping
         state: present
-        update_cache: true
+
+    - name: Ping my hosts
+      ansible.builtin.ping:
+
+    - name: Print message
+      ansible.builtin.debug:
+        msg: Quack!
+    - name: Print multi line message
+      ansible.builtin.debug:
+        msg: |  # Use pipe symbol to indicate multi-line value or > for folded style (converts newlines to spaces)
+          Quack!
+          Quack!
+          Quack!
+
+    - name: Variable example
+      ansible.builtin.debug:
+        msg: "The value of my_var is {{ my_var }}"  # Use double quotes for string interpolation
+
+    - name: Print all available facts
+      ansible.builtin.debug:
+        var: "{{ ansible_facts['nodename'] }}"  # ansible_facts are data relate to remote systems, including OS, IP, etc.
+
+
+    # Setting remote environment variables
+    - name: Env variable example
+      ansible.builtin.shell:
+        cmd: "echo $MY_VAR"
+      environment:
+        MY_VAR: Hello World
+
+    # Loops
+    # Seriously check this out https://docs.ansible.com/ansible/latest/playbook_guide/playbooks_loops.html
+
+    - name: Loops example
+      ansible.builtin.debug:
+        msg: "Item: {{ item }}"
+      loop:  # Commonly used loops include changing ownership of files with the file module, creating multiple users with the user module, and repeating a polling step until a certain condition is met
+        - 1
+        - 2
+        - 3
+
+    - name: Add several users
+      ansible.builtin.user:
+        name: "{{ item }}"
+        state: present
+        groups: users
+      loop:
+        - user1
+        - user2
+        - user3
+
+    - name: Optimal apt installation
+      ansible.builtin.apt:
+        name: "{{ list_of_packages }}"
+        state: present
+
+    - name: Non-optimal apt, slower and may cause issues with interdependencies
+      ansible.builtin.apt:
+        name: "{{ item }}"
+        state: present
+      loop: "{{ list_of_packages }}"
+
+    - name: Register loop output as a variable
+      ansible.builtin.shell: "echo {{ item }}"
+      loop:
+        - "one"
+        - "two"
+      register: echo_output
+
+    - name: Fail if return code is not 0
+      ansible.builtin.fail:
+        msg: "The command ({{ item.cmd }}) did not have a 0 return code"
+      when: item.rc != 0
+      loop: "{{ echo_output.results }}"
+
+    - name: Retry a task until a certain condition is met
+      block:
+        - name: Run a command
+          ansible.builtin.shell: /usr/bin/foo
+          register: result
+          until: result.stdout.find("all systems go") != -1
+          retries: 3
+          delay: 2
+      rescue:  # This block will run if the task fails
+        - name: Print message
+          ansible.builtin.debug:
+            msg: "The task failed - this is the rescue block"
+
+
+    # Filters are used to modify data: transform, select, set default value, split URL, get SHA256 hash, 
+    # perform arithmetic operations, etc. Filtering happens on the control node, NOT on the managed node.
+    # Filters are applied to variables using the pipe symbol |, and can be chained together.
+
+    - name: Filters example
+      ansible.builtin.debug:
+        msg: "{{ user | default('admin', true) }}"  # Use default filter to set a default values
+
+    - name: Map filter
+      ansible.builtin.debug:
+        msg: "{{ list | map('upper') | list }}"  # Use map filter to apply a filter to each item in a list
+
+    - name: Conditional example
+      ansible.builtin.debug:
+        msg: "This is a {{ 'test' if my_var == 'Hello, World!' else 'demo' }}"  # Conditional statement
+
+    - name: Pattern match  # This is an Ansible Test, see https://docs.ansible.com/ansible/latest/playbook_guide/playbooks_tests.html
+      ansible.builtin.debug:
+        msg: "matched pattern"
+      when: url is match("https://example.com/users/.*/resources")
+
+    - name: Datetime
+      ansible.builtin.debug:
+        msg: "{{ now() }}"
+
+
+      # Blocks are used to group tasks together, and can be used to handle errors
+
+    - name: Example block
+      when: ansible_facts['os_family'] == 'Debian'
+      block:
+        - name: This task will run
+          ansible.builtin.debug:
+            msg: "This task will run"
+        - name: This task will also run
+          ansible.builtin.debug:
+            msg: "This task will also run"
+      rescue:  # This block will run if any of the tasks in the block fail
+        - name: This task will run if the block fails
+          ansible.builtin.debug:
+            msg: "This task will run if the block fails"
+      always:  # This block will always run
+        - name: This task will always run
+          ansible.builtin.debug:
+            msg: "This task will always run"
+
+
+
+#########
+# ROLES #
+#########
+
+# Roles are a way to organize tasks, handlers, variables, and other files 
+# in a structured way.
+
+# Roles are defined in the roles directory in the root of the playbook directory.
+# Each role has its own directory with subdirectories for tasks, handlers, variables,
+# templates, and other files.
+
+# Roles are reusable and can be shared across playbooks. They make it easier to
+# manage and maintain playbooks by breaking them down into smaller, more manageable
+# parts.
+
+# We can automatically generate a new role with the following command:
+# ansible-galaxy init <role_name>
+# This will create a new role directory with the necessary subdirectories and files.
+
+# This role installs and configures Apache2 on the webservers group of hosts.
+- name: Configure Web Servers
+  hosts: webservers
+  become: yes
+  roles:
+    - { role: apache, tags: ["apache"] }
+  # We can run only this role with the following command:
+  # ansible-playbook -i inventory.ini playbook.yml --tags apache
+
+...  # Indicates the end of a YAML document

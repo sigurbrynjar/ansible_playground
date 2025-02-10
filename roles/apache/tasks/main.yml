@@ -1,0 +1,32 @@
+---
+
+- name: Install Apache2
+  ansible.builtin.apt:
+    name: apache2
+    state: present
+    update_cache: yes
+
+- name: Copy Apache2 Configuration File
+  ansible.builtin.template:
+    src: apache2.conf.j2
+    dest: /etc/apache2/apache2.conf
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart Apache
+
+- name: Ensure DocumentRoot exists
+  ansible.builtin.file:
+    path: "{{ apache_doc_root }}"
+    state: directory
+    owner: www-data
+    group: www-data
+    mode: "0755"
+
+- name: Enable and Start Apache2
+  ansible.builtin.service:  # This module registers and starts a service (Apache2 HTTP server), 
+    name: apache2           # verify inside container with `curl -I http://localhost` or `service apache2 status`
+    state: started
+    enabled: yes
+
+...
