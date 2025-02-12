@@ -1,0 +1,14 @@
+#SPDX-License-Identifier: MIT-0
+---
+# vars file for ansible_tutorial
+my_var: "Hello, World!"
+user: "{{ lookup('env', 'USER') | default('', true) }}"
+url: "https://example.com/users/foo/resources/bar"
+list:
+  - foo
+  - bar
+  - baz
+list_of_packages:
+  - curl
+  - wget
+  - iputils-ping
