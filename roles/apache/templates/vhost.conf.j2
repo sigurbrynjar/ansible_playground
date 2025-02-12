@@ -1,0 +1,15 @@
+<VirtualHost *:{{ apache_port | default(80) }}>
+    ServerName {{ apache_server_name | default('localhost') }}
+    ServerAlias www.{{ apache_server_name | default('localhost') }}
+    ServerAdmin {{ apache_admin_email | default('webmaster@localhost') }}
+    DocumentRoot {{ apache_doc_root | default('/var/www/html') }}
+
+    <Directory {{ apache_doc_root | default('/var/www/html') }}>
+        Options Indexes FollowSymLinks
+        AllowOverride None
+        Require all granted
+    </Directory>
+
+    ErrorLog ${APACHE_LOG_DIR}/error.log
+    CustomLog ${APACHE_LOG_DIR}/access.log combined
+</VirtualHost>

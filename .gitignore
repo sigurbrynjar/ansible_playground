@@ -7,3 +7,6 @@ context/
 
 *.log
 *.facts
+
+*.bak
+*_bak

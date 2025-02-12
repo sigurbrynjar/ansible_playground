@@ -1,11 +1,16 @@
+#SPDX-License-Identifier: MIT-0
+---
+# vars file for roles/apache
+apache_package_name: "{{ 'apache2' if ansible_facts['os_family'] == 'Debian' else 'httpd' }}"
+apache_config_path: "{{ '/etc/apache2/apache2.conf' if ansible_facts['os_family'] == 'Debian' else '/etc/httpd/conf/httpd.conf' }}"
 apache_port: 8080
 apache_user: "www-data"
 apache_group: "www-data"
 apache_timeout: 400
-apache_keepalive: "On"
-apache_max_keepalive_requests: 200
+apache_keepalive: "On"  # Keeps connections open for multiple requests (better performance).
+apache_max_keepalive_requests: 200  # Maximum requests per KeepAlive connection.
 apache_keepalive_timeout: 10
-apache_server_name: "example.com"
+apache_server_name: "example.com"  # The server name is used to identify the server in the configuration file.
 apache_admin_email: "admin@example.com"
-apache_doc_root: "/var/www/example"
-apache_vhost: true
+apache_doc_root: "/var/www/example"  # The directory where website files are served from.
+apache_vhost: true  # Configures a VirtualHost for this site.
